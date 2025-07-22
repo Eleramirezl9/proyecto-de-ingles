@@ -6,7 +6,9 @@ class QuizManager {
 
     async initialize() {
         try {
-            await WordsManager.loadWords();
+            if (window.WordsManager && typeof window.WordsManager.loadWords === 'function') {
+                await window.WordsManager.loadWords();
+            }
             this.showNewQuestion();
             this.updateUI();
         } catch (error) {
@@ -15,19 +17,21 @@ class QuizManager {
     }
 
     showNewQuestion() {
-        this.currentWord = WordsManager.getRandomWord();
+        if (!window.WordsManager || typeof window.WordsManager.getRandomWord !== 'function') return;
+        this.currentWord = window.WordsManager.getRandomWord();
         const wordDisplay = document.querySelector('.current-word');
         const optionsGrid = document.querySelector('.options-grid');
-        
+        if (!this.currentWord || !wordDisplay || !optionsGrid) return;
+
         // Mostrar la palabra en español
         wordDisplay.textContent = this.currentWord.spanish;
-        
+
         // Generar y mostrar opciones
         const options = this.generateOptions();
         optionsGrid.innerHTML = options
             .map(option => `<button class="option-button" data-value="${option}">${option}</button>`)
             .join('');
-            
+
         // Añadir event listeners
         document.querySelectorAll('.option-button').forEach(button => {
             button.addEventListener('click', (e) => this.handleAnswer(e));
@@ -35,44 +39,53 @@ class QuizManager {
     }
 
     generateOptions() {
+        if (!this.currentWord || !window.WordsManager || typeof window.WordsManager.getAllWords !== 'function') return [];
         const correctAnswer = this.currentWord.english;
-        const allWords = WordsManager.getAllWords();
+        const allWords = window.WordsManager.getAllWords();
         let options = [correctAnswer];
-        
-        while (options.length < 4) {
+
+        while (options.length < 4 && allWords.length > 0) {
             const randomWord = allWords[Math.floor(Math.random() * allWords.length)];
-            if (!options.includes(randomWord.english)) {
+            if (randomWord && !options.includes(randomWord.english)) {
                 options.push(randomWord.english);
             }
         }
-        
+
         return options.sort(() => Math.random() - 0.5);
     }
 
     handleAnswer(event) {
         const selectedButton = event.target;
         const selectedAnswer = selectedButton.dataset.value;
-        const isCorrect = selectedAnswer === this.currentWord.english;
-        
+        const isCorrect = this.currentWord && selectedAnswer === this.currentWord.english;
+
         document.querySelectorAll('.option-button').forEach(btn => btn.disabled = true);
-        
+
         if (isCorrect) {
             selectedButton.classList.add('correct');
-            // Usar GameLogic para los puntos
-            GameLogic.addPoints(10, "¡Respuesta correcta!");
-            GameLogic.updateStreak(true);
-            WordsManager.markWord(this.currentWord, true);
+            if (window.GameLogic && typeof window.GameLogic.addPoints === 'function') {
+                window.GameLogic.addPoints(10, "¡Respuesta correcta!");
+            }
+            if (window.GameLogic && typeof window.GameLogic.updateStreak === 'function') {
+                window.GameLogic.updateStreak(true);
+            }
+            if (window.WordsManager && typeof window.WordsManager.markWord === 'function') {
+                window.WordsManager.markWord(this.currentWord, true);
+            }
         } else {
             selectedButton.classList.add('incorrect');
-            document.querySelector(`[data-value="${this.currentWord.english}"]`)
-                .classList.add('correct');
-            GameLogic.updateStreak(false);
+            if (this.currentWord) {
+                const correctBtn = document.querySelector(`[data-value="${this.currentWord.english}"]`);
+                if (correctBtn) correctBtn.classList.add('correct');
+            }
+            if (window.GameLogic && typeof window.GameLogic.updateStreak === 'function') {
+                window.GameLogic.updateStreak(false);
+            }
         }
-        
-        // Actualizar UI directamente
+
         this.updateUI();
         this.updateProgress();
-        
+
         setTimeout(() => this.showNewQuestion(), 1500);
     }
 
@@ -80,9 +93,8 @@ class QuizManager {
         try {
             const quizScore = document.getElementById('quiz-score');
             const quizStreak = document.getElementById('quiz-streak');
-            
-            if (quizScore) quizScore.textContent = GameLogic.points;
-            if (quizStreak) quizStreak.textContent = GameLogic.streak;
+            if (quizScore && window.GameLogic) quizScore.textContent = window.GameLogic.points || 0;
+            if (quizStreak && window.GameLogic) quizStreak.textContent = window.GameLogic.streak || 0;
         } catch (error) {
             console.error('Error actualizando UI:', error);
         }
@@ -90,14 +102,14 @@ class QuizManager {
 
     updateProgress() {
         try {
-            const progress = WordsManager.getProgress();
+            if (!window.WordsManager || typeof window.WordsManager.getProgress !== 'function') return;
+            const progress = window.WordsManager.getProgress();
             const progressText = document.getElementById('progress-text');
             const progressBar = document.getElementById('progress-bar');
-            
-            if (progressText) {
+            if (progressText && progress) {
                 progressText.textContent = `${progress.learned}/${progress.total} palabras`;
             }
-            if (progressBar) {
+            if (progressBar && progress && progress.total > 0) {
                 progressBar.style.width = `${(progress.learned / progress.total) * 100}%`;
             }
         } catch (error) {
@@ -106,7 +118,6 @@ class QuizManager {
     }
 }
 
-// Inicializar el quiz cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded', () => {
     new QuizManager();
 });

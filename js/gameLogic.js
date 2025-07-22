@@ -52,4 +52,12 @@ class GameLogic {
     static getRecentWords() {
         return this.recentWords;
     }
+
+    static getPoints() {
+        // Devuelve los puntos actuales
+        return this.points || 0;
+    }
 }
+
+// Exportar al scope global para otros scripts
+window.GameLogic = GameLogic;

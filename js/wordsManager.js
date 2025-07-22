@@ -122,5 +122,12 @@ const WordsManager = {
         !recentWords.find(rw => rw.english === w.english));
     
     return [...recentWords, ...otherWords];
-  }
+  },
+
+  getAllWords: function() {
+    // Devuelve todas las palabras cargadas
+    return this.words || [];
+  },
 };
+// Exportar al scope global para otros scripts
+window.WordsManager = WordsManager;

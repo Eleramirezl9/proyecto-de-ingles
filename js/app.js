@@ -4,97 +4,137 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
         await WordsManager.loadWords();
         currentWord = WordsManager.getRandomWord();
-        
+
         // Event listeners
-        document.getElementById('flashcard-container').addEventListener('click', flipCard);
-        document.getElementById('mark-learned').addEventListener('click', () => {
-            WordsManager.markWord(currentWord, true);
-            // Actualizar puntuación del quiz si existe
-            const quizManager = window.quizManager;
-            if (quizManager) {
-                quizManager.score += 5;
-                quizManager.updateUI();
-            }
-            nextCard();
-        });
-        document.getElementById('mark-difficult').addEventListener('click', () => {
-            WordsManager.markWord(currentWord, false, true);
-            nextCard();
-        });
-        document.getElementById('next-card').addEventListener('click', nextCard);
-        document.getElementById('toggle-dark-mode').addEventListener('click', toggleDarkMode);
-        document.getElementById('submit-quiz').addEventListener('click', submitQuizAnswer);
-        
+        const flashcardContainer = document.getElementById('flashcard-container');
+        if (flashcardContainer) {
+            flashcardContainer.addEventListener('click', flipCard);
+        }
+
+        const btnMarkLearned = document.getElementById('mark-learned');
+        if (btnMarkLearned) {
+            btnMarkLearned.addEventListener('click', () => {
+                WordsManager.markWord(currentWord, true);
+                const quizManager = window.quizManager;
+                if (quizManager) {
+                    quizManager.score += 5;
+                    quizManager.updateUI();
+                }
+                nextCard();
+            });
+        }
+
+        const btnMarkDifficult = document.getElementById('mark-difficult');
+        if (btnMarkDifficult) {
+            btnMarkDifficult.addEventListener('click', () => {
+                WordsManager.markWord(currentWord, false, true);
+                nextCard();
+            });
+        }
+
+        const btnNextCard = document.getElementById('next-card');
+        if (btnNextCard) {
+            btnNextCard.addEventListener('click', nextCard);
+        }
+
+        const btnToggleDark = document.getElementById('toggle-dark-mode');
+        if (btnToggleDark) {
+            btnToggleDark.addEventListener('click', toggleDarkMode);
+        }
+
+        const btnSubmitQuiz = document.getElementById('submit-quiz');
+        if (btnSubmitQuiz) {
+            btnSubmitQuiz.addEventListener('click', submitQuizAnswer);
+        }
+
         updateUI();
         updateFlashcard();
-        
+
         // Inicializar QuizManager después de cargar las palabras
         window.quizManager = new QuizManager();
     } catch (error) {
         console.error("Error inicializando la app:", error);
-        document.querySelector('.front').textContent = 'Error cargando la aplicación';
+        const front = document.querySelector('.front');
+        if (front) front.textContent = 'Error cargando la aplicación';
     }
 });
 
 function flipCard() {
-    document.getElementById('flashcard').classList.toggle('flipped');
-    // Añadir puntos por interacción
-    GameLogic.addPoints(1, "¡Practicando!");
+    const flashcard = document.getElementById('flashcard');
+    if (flashcard) {
+        flashcard.classList.toggle('flipped');
+        if (window.GameLogic && typeof GameLogic.addPoints === 'function') {
+            GameLogic.addPoints(1, "¡Practicando!");
+        }
+    }
 }
 
 function nextCard() {
-    currentWord = WordsManager.getRandomWord();
-    updateFlashcard();
-    updateUI();
-    GameLogic.addRecentWord(currentWord);
+    if (window.WordsManager && typeof WordsManager.getRandomWord === 'function') {
+        currentWord = WordsManager.getRandomWord();
+        updateFlashcard();
+        updateUI();
+        if (window.GameLogic && typeof GameLogic.addRecentWord === 'function') {
+            GameLogic.addRecentWord(currentWord);
+        }
+    }
 }
 
 function updateFlashcard() {
-  const flashcard = document.getElementById('flashcard');
-  if (currentWord) {
-    flashcard.querySelector('.front').textContent = currentWord.english;
-    flashcard.querySelector('.back').textContent = currentWord.spanish;
-  }
-  flashcard.classList.remove('flipped');
+    const flashcard = document.getElementById('flashcard');
+    if (flashcard && currentWord) {
+        const front = flashcard.querySelector('.front');
+        const back = flashcard.querySelector('.back');
+        if (front) front.textContent = currentWord.english;
+        if (back) back.textContent = currentWord.spanish;
+        flashcard.classList.remove('flipped');
+    }
 }
 
 function updateUI() {
-  const { learned, total } = WordsManager.getProgress();
-  document.getElementById('progress-text').textContent = `${learned}/${total} palabras`;
-  document.getElementById('progress-bar').style.width = `${(learned / total) * 100}%`;
-  
-  // Actualizar estadísticas del juego
-  if (typeof GameLogic !== 'undefined') {
-    document.getElementById('points').textContent = GameLogic.getPoints();
-    document.getElementById('level').textContent = GameLogic.getLevel();
-    document.getElementById('streak').textContent = `${GameLogic.getStreak()} días`;
-  }
+    const progress = WordsManager.getProgress();
+    const progressText = document.getElementById('progress-text');
+    const progressBar = document.getElementById('progress-bar');
+    if (progressText && progress) {
+        progressText.textContent = `${progress.learned}/${progress.total} palabras`;
+    }
+    if (progressBar && progress && progress.total > 0) {
+        progressBar.style.width = `${(progress.learned / progress.total) * 100}%`;
+    }
+
+    // Actualizar estadísticas del juego
+    if (window.GameLogic) {
+        const points = (typeof GameLogic.getPoints === 'function') ? GameLogic.getPoints() : 0;
+        const level = (typeof GameLogic.getLevel === 'function') ? GameLogic.getLevel() : 1;
+        const streak = (typeof GameLogic.getStreak === 'function') ? GameLogic.getStreak() : 0;
+        const pointsElem = document.getElementById('points');
+        const levelElem = document.getElementById('level');
+        const streakElem = document.getElementById('streak');
+        if (pointsElem) pointsElem.textContent = points;
+        if (levelElem) levelElem.textContent = level;
+        if (streakElem) streakElem.textContent = `${streak} días`;
+    }
 }
 
 function toggleDarkMode() {
-  document.body.classList.toggle('dark-mode');
+    document.body.classList.toggle('dark-mode');
 }
 
 function submitQuizAnswer() {
-  // Busca la opción seleccionada (asumiendo que son radio buttons con name="quiz-option")
-  const selected = document.querySelector('input[name="quiz-option"]:checked');
-  if (!selected) {
-    alert('Por favor selecciona una respuesta.');
-    return;
-  }
-  const answer = selected.value;
-  // Aquí puedes agregar la lógica para verificar la respuesta
-  // Por ejemplo:
-  if (answer === currentWord.spanish) {
-    alert('¡Correcto!');
-    // Actualiza puntos, etc.
-    if (typeof GameLogic !== 'undefined') {
-      GameLogic.addPoint();
-      updateUI();
+    const selected = document.querySelector('input[name="quiz-option"]:checked');
+    if (!selected) {
+        alert('Por favor selecciona una respuesta.');
+        return;
     }
-  } else {
-    alert('Incorrecto. La respuesta correcta es: ' + currentWord.spanish);
-  }
-  // Puedes cargar una nueva pregunta si lo deseas
-  nextCard();
+    const answer = selected.value;
+    if (answer === currentWord.spanish) {
+        alert('¡Correcto!');
+        if (window.GameLogic && typeof GameLogic.addPoint === 'function') {
+            GameLogic.addPoint();
+            updateUI();
+        }
+    } else {
+        alert('Incorrecto. La respuesta correcta es: ' + currentWord.spanish);
+    }
+    nextCard();
 }

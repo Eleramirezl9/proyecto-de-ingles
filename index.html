@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Herramienta de Aprendizaje de Inglés</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/dark-mode.css">
+  
+</head>
+<body>
+  <header>
+    <img src="bot-icon.png" alt="Bot Icon" id="bot-icon" class="header-icon">
+    <h1>Aprende Inglés</h1>
+    <button id="toggle-dark-mode">🌙 Modo Oscuro</button>
+  </header>
+  <main>
+    <section id="progress">
+      <h2>Progreso: <span id="progress-text">0/0 palabras</span></h2>
+      <div id="progress-bar-container">
+        <div id="progress-bar"></div>
+      </div>
+    </section>
+    <section id="flashcards">
+      <h2>Flashcards</h2>
+      <div id="flashcard-container">
+        <div id="flashcard" class="flashcard">
+          <div class="front">Cargando...</div>
+          <div class="back"></div>
+        </div>
+      </div>
+      <button id="mark-learned">Marcar como Aprendida</button>
+      <button id="mark-difficult">Marcar como Difícil</button>
+      <button id="next-card">Siguiente</button>
+    </section>
+    <section id="quiz" class="quiz-section">
+        <h2>Quiz</h2>
+        <div class="quiz-container">
+            <div class="quiz-header">
+                <span class="score">Puntos: <span id="quiz-score">0</span></span>
+                <span class="streak">🔥 <span id="quiz-streak">0</span></span>
+            </div>
+            <div class="word-container">
+                <span class="word-label">Traduce al inglés:</span>
+                <h3 class="current-word">casa</h3>
+            </div>
+            <div class="options-grid">
+                <!-- Las opciones se generarán dinámicamente -->
+            </div>
+        </div>
+    </section>
+    <section id="stats">
+      <h2>Estadísticas</h2>
+      <p>Puntos: <span id="points">0</span></p>
+      <p>Nivel: <span id="level">1</span></p>
+      <p>Streak: <span id="streak">0 días</span></p>
+    </section>
+  </main>
+  <div id="error-message" style="color:red; text-align:center; display:none;"></div>
+  <script src="js/wordsManager.js" defer></script>
+  <script src="js/gameLogic.js" defer></script>
+  <script src="js/app.js" defer></script>
+  <script src="js/quizManager.js" defer></script>
+</body>
+</html>
